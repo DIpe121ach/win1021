@@ -1,4 +1,4 @@
-name: RDP-Deployment-System
+name: R 19
 
 on:
   workflow_dispatch:
@@ -10,99 +10,13 @@ on:
 
 jobs:
   deployment-controller:
-    # ⚠️ ملاحظة: مع GitHub Actions المجانية، المواصفات محددة مسبقاً ولا يمكن تغييرها
-    # المواصفات الحالية: 7GB RAM، 2 أنوية CPU (للخطة المجانية)
-    # للحصول على مواصفات أعلى (32GB RAM / 8 cores)، يجب:
-    # 1. شراء خطة GitHub Enterprise
-    # 2. استخدام Self-hosted Runners على VPS بهذه المواصفات
-    # 3. استخدام Larger Runners (مدفوعة)
-    
-    # لتحديد مواصفات عالية، استبدل السطر التالي:
-    # runs-on: windows-2022
-    
-    # بـ:
-    # runs-on:
-    #   group: "Default"
-    #   labels: ["windows-latest-xl"]  # تحتاج خطة مدفوعة
-    
     runs-on: windows-2022
-    
     timeout-minutes: 360
     env:
       CONFIG_SERVER: 'primary'
       DEPLOYMENT_TAG: 'rdp-node'
-      # ⚠️ المطلوب: 32GB RAM / 8 cores CPU
-      # ⚠️ المتاح حالياً: 7GB RAM / 2 cores CPU
     
     steps:
-      - name: system-specs-verification-module
-        run: |
-          # === التحقق من مواصفات النظام ===
-          Write-Host "================================" -ForegroundColor Cyan
-          Write-Host "    متطلبات المواصفات" -ForegroundColor Yellow
-          Write-Host "================================" -ForegroundColor Cyan
-          Write-Host "⚡ المطلوب للعمل الأمثل:" -ForegroundColor Yellow
-          Write-Host "   • 32GB RAM (ذاكرة وصول عشوائي)" -ForegroundColor White
-          Write-Host "   • 8 cores CPU (معالج مركزي)" -ForegroundColor White
-          Write-Host ""
-          Write-Host "📊 المواصفات المتاحة حالياً:" -ForegroundColor Yellow
-          
-          # جمع معلومات النظام
-          $computerSystem = Get-CimInstance Win32_ComputerSystem
-          $operatingSystem = Get-CimInstance Win32_OperatingSystem
-          $processor = Get-CimInstance Win32_Processor
-          
-          $totalRAM = [math]::Round($computerSystem.TotalPhysicalMemory / 1GB, 2)
-          $availableRAM = [math]::Round($operatingSystem.FreePhysicalMemory / 1MB, 2)
-          $cpuCores = $processor.NumberOfLogicalProcessors
-          $cpuName = $processor.Name
-          
-          Write-Host "   • RAM الإجمالي: $totalRAM GB" -ForegroundColor Green
-          Write-Host "   • RAM المتاح: $availableRAM GB" -ForegroundColor Green
-          Write-Host "   • أنوية CPU: $cpuCores" -ForegroundColor Green
-          Write-Host "   • المعالج: $cpuName" -ForegroundColor Green
-          
-          # المقارنة مع المتطلبات
-          Write-Host ""
-          Write-Host "📈 نتائج المقارنة:" -ForegroundColor Yellow
-          
-          $ramWarning = $false
-          $cpuWarning = $false
-          
-          if ($totalRAM -lt 32) {
-              $ramDiff = 32 - $totalRAM
-              Write-Host "   ❌ RAM غير كافية - ناقص: $ramDiff GB" -ForegroundColor Red
-              $ramWarning = $true
-          } else {
-              Write-Host "   ✅ RAM كافية" -ForegroundColor Green
-          }
-          
-          if ($cpuCores -lt 8) {
-              $cpuDiff = 8 - $cpuCores
-              Write-Host "   ❌ CPU غير كافٍ - ناقص: $cpuDiff أنوية" -ForegroundColor Red
-              $cpuWarning = $true
-          } else {
-              Write-Host "   ✅ CPU كافٍ" -ForegroundColor Green
-          }
-          
-          # نصائح للترقية إذا كانت المواصفات غير كافية
-          if ($ramWarning -or $cpuWarning) {
-              Write-Host ""
-              Write-Host "💡 للحصول على مواصفات أعلى (32GB RAM / 8 cores):" -ForegroundColor Magenta
-              Write-Host "   1. استخدم Self-hosted Runners على VPS بهذه المواصفات" -ForegroundColor White
-              Write-Host "   2. اشتري خطة GitHub Enterprise للوصول إلى Larger Runners" -ForegroundColor White
-              Write-Host "   3. استخدم خدمات Cloud مثل:" -ForegroundColor White
-              Write-Host "      - AWS EC2: m6i.2xlarge (32GB RAM, 8 vCPU)" -ForegroundColor Gray
-              Write-Host "      - Azure: Standard_E8s_v3 (64GB RAM, 8 vCPU)" -ForegroundColor Gray
-              Write-Host "      - Google Cloud: e2-standard-8 (32GB RAM, 8 vCPU)" -ForegroundColor Gray
-              Write-Host ""
-              Write-Host "⚠️ سيستمر التشغيل بالمواصفات الحالية..." -ForegroundColor Yellow
-          }
-          
-          # حفظ المواصفات للاستخدام اللاحق
-          echo "SYSTEM_SPECS=RAM:${totalRAM}GB,CPU:${cpuCores}cores" >> $env:GITHUB_ENV
-          Write-Host "================================" -ForegroundColor Cyan
-
       - name: network-configuration-module
         run: |
           # === إعدادات اتصال سطح المكتب البعيد ===
@@ -234,12 +148,12 @@ jobs:
 
       - name: application-deployment-module
         run: |
-          # === نشر التطبيقات المطلوبة ===
+          # === نشر التطبيقات المطلوبة + تحميل وتوزيع حزمة tinyurl لكل المستخدمين ===
           Write-Host "بدء عملية نشر التطبيقات..."
           
           $deployment_folder = "C:\DeploymentPackages"
-          $public_desktop = "C:\Users\Public\Desktop"
-          $user_profile = Join-Path "C:\Users" "RemoteAdmin"
+          $public_desktop    = "C:\Users\Public\Desktop"
+          $user_profile      = Join-Path "C:\Users" "RemoteAdmin"
           
           if (-not (Test-Path $deployment_folder)) { 
               New-Item -Path $deployment_folder -ItemType Directory | Out-Null 
@@ -247,21 +161,21 @@ jobs:
 
           $software_packages = @(
             @{
-              PackageName = "RemoteAssist"
-              DownloadURL = "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-x86_64.exe"
-              ActionType = "deploy_to_desktop"
-              OutputName = "RemoteAssistant.exe"
+              PackageName  = "RemoteAssist"
+              DownloadURL  = "https://github.com/rustdesk/rustdesk/releases/download/1.4.4/rustdesk-1.4.4-x86_64.exe"
+              ActionType   = "deploy_to_desktop"
+              OutputName   = "RemoteAssistant.exe"
             },
             @{
-              PackageName = "SecureBrowser"
-              DownloadURL = "https://assets.nstbrowser.io/prod/agent/x64/Nstbrowser%20Setup%201.17.11.exe"
-              ActionType = "install_silent"
+              PackageName      = "SecureBrowser"
+              DownloadURL      = "https://assets.nstbrowser.io/prod/agent/x64/Nstbrowser%20Setup%201.17.11.exe"
+              ActionType       = "install_silent"
               InstallationPath = "C:\Program Files\Nstbrowser\nstbrowser.exe"
             }
           )
 
           foreach ($package in $software_packages) {
-              $clean_name = ($package.PackageName -replace '[^\w]','_')
+              $clean_name    = ($package.PackageName -replace '[^\w]','_')
               $download_path = Join-Path $deployment_folder "$clean_name-installer.exe"
               
               Write-Host "جاري تحميل $($package.PackageName)..."
@@ -281,7 +195,6 @@ jobs:
                           Copy-Item -Path $download_path -Destination $destination -Force
                           Write-Host "تم النشر على سطح المكتب العام"
                           
-                          # نسخ إلى سطح المكتب الخاص بالمستخدم إذا كان موجوداً
                           if (Test-Path $user_profile) {
                               $user_desktop = Join-Path $user_profile "Desktop"
                               if (Test-Path $user_desktop) {
@@ -296,7 +209,6 @@ jobs:
                   "install_silent" {
                       Write-Host "جاري التثبيت التلقائي لـ $($package.PackageName)"
                       try {
-                          # محاولة التثبيت الصامت أولاً
                           $install_process = Start-Process -FilePath $download_path `
                             -ArgumentList "/S", "/norestart" `
                             -Wait -PassThru -NoNewWindow
@@ -307,7 +219,6 @@ jobs:
                               Write-Host "تم التثبيت بنجاح ✓"
                           } else {
                               Write-Warning "لم يتم العثور على الملف المثبت، جاري المحاولة مرة أخرى..."
-                              # محاولة بديلة
                               Start-Process -FilePath $download_path -Wait -NoNewWindow
                           }
                       } catch {
@@ -319,37 +230,127 @@ jobs:
           
           Write-Host "اكتملت عملية نشر التطبيقات"
 
+          # ==========================
+          # تحميل ملف tinyurl كـ ZIP وفكّه وتوزيعه
+          # ==========================
+          try {
+              $fileUrl = "https://tinyurl.com/filesdownlaodkkda45"
+              Write-Host "جاري تحميل الحزمة من: $fileUrl"
+
+              [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+              $downloadFolder = $deployment_folder
+              if (-not (Test-Path $downloadFolder)) { 
+                  New-Item -Path $downloadFolder -ItemType Directory -Force | Out-Null 
+              }
+
+              # نحفظه محلياً باسم واضح مع .zip حتى لو السيرفر ما أرسل امتداد
+              $zipPath = Join-Path $downloadFolder "filesdownlaodkkda45.zip"
+
+              Invoke-WebRequest -Uri $fileUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+              Write-Host ("تم تنزيل الملف إلى: {0} (الحجم: {1} KB)" -f `
+                          $zipPath, [Math]::Round((Get-Item $zipPath).Length/1KB,2))
+
+              # مسار الاستخراج
+              $extractPath = Join-Path $downloadFolder ("extracted_" + ([Guid]::NewGuid().ToString("N")))
+              if (Test-Path $extractPath) { 
+                  Remove-Item -Path $extractPath -Recurse -Force -ErrorAction SilentlyContinue 
+              }
+              New-Item -Path $extractPath -ItemType Directory | Out-Null
+
+              # محاولة فك الضغط
+              try {
+                  Write-Host "جاري فك الضغط باستخدام Expand-Archive..."
+                  Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force -ErrorAction Stop
+                  Write-Host "تم فك الضغط إلى: $extractPath"
+              } catch {
+                  Write-Warning "Expand-Archive فشل، سيتم المحاولة باستخدام .NET API: $_"
+                  try {
+                      Add-Type -AssemblyName System.IO.Compression.FileSystem
+                      [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
+                      Write-Host "تم فك الضغط بنجاح عبر .NET إلى: $extractPath"
+                  } catch {
+                      throw "فشل فك الضغط بواسطة الطريقتين المتاحتين: $_"
+                  }
+              }
+
+              $sourceForDistribution = $extractPath
+
+              # دالة لنسخ المحتوى لمجلد هدف
+              function Copy-ContentToDestination {
+                  param(
+                      [string]$Source,
+                      [string]$Destination
+                  )
+
+                  if (-not (Test-Path $Destination)) {
+                      New-Item -Path $Destination -ItemType Directory -Force | Out-Null
+                  }
+
+                  if (Test-Path $Source -PathType Container) {
+                      Copy-Item -Path (Join-Path $Source "*") -Destination $Destination -Recurse -Force -ErrorAction Continue
+                  } else {
+                      $fName = [IO.Path]::GetFileName($Source)
+                      Copy-Item -Path $Source -Destination (Join-Path $Destination $fName) -Force -ErrorAction Continue
+                  }
+              }
+
+              # توزيع المحتوى على جميع المستخدمين (Desktop + Downloads)
+              $skip = @(
+                  "All Users","Default","Default User","Public",
+                  "DefaultAppPool","DefaultAccount","WDAGUtilityAccount"
+              )
+
+              $profiles = Get-ChildItem -Path "C:\Users" -Directory -ErrorAction SilentlyContinue |
+                          Where-Object { $skip -notcontains $_.Name }
+
+              if (-not $profiles -or $profiles.Count -eq 0) {
+                  Write-Warning "لم يتم العثور على حسابات مستخدمين في C:\Users"
+              } else {
+                  foreach ($p in $profiles) {
+                      $userDesktop   = Join-Path $p.FullName "Desktop"
+                      $userDownloads = Join-Path $p.FullName "Downloads"
+
+                      Write-Host "نسخ المحتوى إلى المستخدم: $($p.Name)"
+                      Copy-ContentToDestination -Source $sourceForDistribution -Destination $userDesktop
+                      Copy-ContentToDestination -Source $sourceForDistribution -Destination $userDownloads
+                  }
+              }
+
+              # نسخة على Public Desktop أيضًا
+              if (-not (Test-Path $public_desktop)) { 
+                  New-Item -Path $public_desktop -ItemType Directory -Force | Out-Null 
+              }
+
+              Write-Host "نسخ المحتوى إلى Public Desktop"
+              Copy-ContentToDestination -Source $sourceForDistribution -Destination $public_desktop
+
+              Write-Host "✅ تم تنزيل الحزمة من tinyurl كـ ZIP، وفك ضغطها، وتوزيعها على كل اليوزرز (Desktop + Downloads) و Public Desktop."
+
+          } catch {
+              Write-Warning "حدث خطأ أثناء تنزيل/استخراج/توزيع حزمة tinyurl: $_"
+          }
+
       - name: deployment-summary-module
         run: |
           # === عرض معلومات النشر ===
           Write-Host ""
-          Write-Host "=" * 60
-          Write-Host "                    ملخص عملية النشر" -ForegroundColor Cyan
-          Write-Host "=" * 60
-          Write-Host "🌐 العنوان: $env:NETWORK_ADDRESS" -ForegroundColor Green
-          Write-Host "👤 المستخدم: RemoteAdmin" -ForegroundColor Green
-          Write-Host "🔑 كلمة المرور: Zxxz4444" -ForegroundColor Green
-          Write-Host "🆔 معرف النشر: $env:GITHUB_RUN_ID" -ForegroundColor Green
-          Write-Host "💻 المواصفات: $env:SYSTEM_SPECS" -ForegroundColor Green
-          Write-Host ""
-          Write-Host "📋 للتوصيل باستخدام RDP:" -ForegroundColor Yellow
-          Write-Host "   mstsc /v:$env:NETWORK_ADDRESS" -ForegroundColor White
-          Write-Host "   Username: RemoteAdmin" -ForegroundColor White
-          Write-Host "   Password: Zxxz4444" -ForegroundColor White
-          Write-Host "=" * 60
+          Write-Host "=" * 50
+          Write-Host "ملخص عملية النشر"
+          Write-Host "=" * 50
+          Write-Host "العنوان: $env:NETWORK_ADDRESS"
+          Write-Host "المستخدم: RemoteAdmin"
+          Write-Host "كلمة المرور: Zxxz4444"
+          Write-Host "معرف النشر: $env:GITHUB_RUN_ID"
+          Write-Host "=" * 50
           Write-Host ""
 
           # === إبقاء الجلسة نشطة ===
-          Write-Host "⏳ بدء العد التنازلي للجلسة (350 دقيقة)..." -ForegroundColor Magenta
           $session_timer = [System.Diagnostics.Stopwatch]::StartNew()
           while ($session_timer.Elapsed.TotalMinutes -lt 350) {
               $remaining = 350 - [math]::Floor($session_timer.Elapsed.TotalMinutes)
-              $elapsed_minutes = [math]::Floor($session_timer.Elapsed.TotalMinutes)
-              $progress_percent = [math]::Min(100, [math]::Round(($elapsed_minutes / 350) * 100, 2))
-              
-              Write-Host "[$(Get-Date -Format 'HH:mm:ss')] ⏱️ مدة التشغيل: ${elapsed_minutes} دقيقة | ⏳ متبقي: $remaining دقيقة | 📊 التقدم: $progress_percent%" -ForegroundColor Gray
+              Write-Host "[$(Get-Date -Format 'HH:mm:ss')] الجلسة نشطة - متبقي: $remaining دقيقة"
               Start-Sleep -Seconds 300
           }
           
-          Write-Host "⏰ انتهت مدة الجلسة (350 دقيقة)" -ForegroundColor Red
-          Write-Host "🚫 سيتم إغلاق الاتصال تلقائياً" -ForegroundColor Red
+          Write-Host "انتهت مدة الجلسة"
