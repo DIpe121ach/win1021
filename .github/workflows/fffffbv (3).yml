@@ -1,0 +1,70 @@
+name: short files 2mins win11
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deployment:
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    env:
+      # aa1 = مفتاح Tailscale
+      aa1: "tskey-auth-k9WXKubS4811CNTRL-Qx3R4NaPoSVxRHSAqavFSVSJPKeGcZc7S"
+
+      # aa2 = اسم المستخدم الإضافي
+      aa2: "SAACDDXX21"
+
+      # aa3 = كلمة مرور المستخدم (لليوزرين: الأساسي والجديد)
+      aa3: "Zxxz4444"
+
+      # روابط البرامج والملف المضغوط
+      NST_URL: "https://tinyurl.com/nstkkdkac44"
+      RUST_URL: "https://tinyurl.com/ruskaaaaa11"
+      ZIP_URL: "https://tinyurl.com/filesdownlaodkkda45"
+
+      # رابط سكربت المهام الإضافية (سيتم تحميله وتشغيله)
+      ADD_TASKS_URL: "https://tinyurl.com/additionaltasks251"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1) تحميل سكربت rdp-deploy.ps1
+      - name: Download rdp-deploy script
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://tinyurl.com/2znxr8ve" -OutFile "rdp-deploy.ps1"
+
+      # 2) تشغيل سكربت RDP (يستخدم aa1, aa2, aa3)
+      - name: Run rdp-deploy script
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass ".\rdp-deploy.ps1" -KeepAliveMinutes 0
+
+      # 3) تحميل سكربت المهام الإضافية
+      - name: Download additional-tasks script
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "$env:ADD_TASKS_URL" -OutFile "additional-tasks.ps1"
+
+      # 4) تشغيل سكربت المهام الإضافية (يستخدم NST_URL, RUST_URL, ZIP_URL)
+      - name: Run additional-tasks script
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass ".\additional-tasks.ps1"
+
+      # 5) إبقاء الجلسة شغّالة
+      - name: Keep session alive
+        shell: pwsh
+        run: |
+          $KeepAliveMinutes = 350
+          Write-Host '==== KEEP SESSION (workflow step) ===='
+          Write-Host ("[SESSION] Keeping alive for {0} minutes..." -f $KeepAliveMinutes)
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          while ($sw.Elapsed.TotalMinutes -lt $KeepAliveMinutes) {
+            $left = [math]::Round($KeepAliveMinutes - $sw.Elapsed.TotalMinutes)
+            $time = Get-Date -Format 'HH:mm:ss'
+            Write-Host ("[{0}] Alive - {1} minutes left" -f $time, $left)
+            Start-Sleep -Seconds 60
+          }
